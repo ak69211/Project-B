@@ -238,35 +238,6 @@ for(i in 1: (ticker_count-1))
 correlation_long_short <- cor(portfolio_return_long,portfolio_return_short, use = "complete.obs")
 correlation_long_short
 
-##########Question 3
-
-#### Lags 2 to 10
-#statistics_lag2 = sf(stock_pivot,weights,"1996-01-03","2001-12-31",2)
-#statistics_lag2
-
-#statistics_lag3 = sf(stock_pivot,weights,"1996-01-04","2001-12-31",3)
-#statistics_lag3
-
-#statistics_lag4 = sf(stock_pivot,weights,"1996-01-05","2001-12-31",4)
-#statistics_lag4
-
-#statistics_lag5 = sf(stock_pivot,weights,"1996-01-08","2001-12-31",5)
-#statistics_lag5
-
-#statistics_lag6 = sf(stock_pivot,weights,"1996-01-09","2001-12-31",6)
-#statistics_lag6
-
-#statistics_lag7 = sf(stock_pivot,weights,"1996-01-10","2001-12-31",7)
-#statistics_lag7
-
-#statistics_lag8 = sf(stock_pivot,weights,"1996-01-11","2001-12-31",8)
-#statistics_lag8
-
-#statistics_lag9 = sf(stock_pivot,weights,"1996-01-12","2001-12-31",9)
-#statistics_lag9
-
-#statistics_lag10 = sf(stock_pivot,weights,"1996-01-15","2001-12-31",10)
-#statistics_lag10
 
 ###### Strategy Set Up for Question #2
 stocks_df_q2 = read_excel("C:/Users/Laura/Desktop/MIT Fall 2018/Financial Data Science/Assignment/Assignment #2/Dataset_1996-2001_updated.xlsx")
@@ -420,350 +391,33 @@ correlation_q2
 ## Part f, Question 2
 correlation_long_short_q2 <- cor(long_portfolio_q2_returns_q2,short_portfolio_q2_returns_q2, use = "complete.obs")
 correlation_long_short_q2
-```
 
-## Question 1
+##########Question 3
 
-The objective of this project is to evaluate different algorithmic trading strategies based on a sample of 690 publicly traded US equities in the period from Jan 1, 1996 to Dec 31, 2001. The analysis was performed with data from the University of Chicago's Center for Research in Security Prices (CRSP) database. The returns analyzed are log returns that were adjusted for corporate actions such as splits and dividends.
-
-First, we will analyze a contrarian strategy that is taking short positions on previous days winners and long positions on previous day losers. It thus employs the characteristics of an 'anti-momentum' strategy. 
-
-It has the following characteristics. The average market return is calculated as the unweighted average returns of our sample stocks.
-$$ \bar{R}(t)=\frac{1}{N}\sum_{i\in U}R_i(t)$$
-The weight of the individual stocks in the following day is then defined based on the excess return of the stock versus the stock market on the previous day. The weights are thus calculated as follows:
-$$w_{i}(t) = -c(t)[R_{i}(t)-\bar{R}_{i}(t)]$$
-The individual weights may be positive or negative, and the long and short positions will balance each other out by construction, such that:
-$$\sum_{i\in L}w_i=1=\sum_{j\in S}|w_j|$$
-The time series of daily portfolio returns, $\pi (t)$ is thus defined as:
-$$\pi (t)=\frac{\Delta MV}{MV}=\sum_{i\in U}w_i(t-1)R_i(t)$$
-The strategy was implemented on a trading period between Jan 1, 1996 and Dec 31, 2001, inclusive. This effectively means that trading starts on Jan 2, 1996, since Jan 1 is a bank holiday. The first trading day is based on the returns from the previous trading day, in this case Dec 29, 1995. 
-
-Before running the analysis, a number of data integrity checks were performed to assess the validity of our data. 
-```{r A.0, figh.align = "center", echo = FALSE}
-data_checks <- data.frame("CN" = c("1", "2"), "Check" = c("Presence of non-numeric entities", "Missing dates"), "Results" = c("No", "Yes"))
-kable(data_checks, align = "clr", caption = "Data Integrity Checks", row.names = FALSE, col.names = c("Check Number", "Data Integrity Check", "Results"))
-```
-
-As we can see in the table above, there were no missing or non-numeric data within our sample data. Our values are negative, positive, and zero which is all possible given the nature of the log-returns. Furthermore, we found a number of missing dates within our data. There is no gap bigger than 4 days which seems to be reasonable given long weekends during the period, and one apparent market close of 7 days which happened after the 9/11 attacks. Additionally, for every stock the number of dates in each year was the same. Therefore, the integrity of our data seems to be given and our data seems to be complete.
-
-Implementing our strategy, the plotted daily portfolio returns are presented below:
-
-```{r A.1, fig.align="center", fig.width = 5, fig.height = 4, echo = FALSE}
-p_portfolio_returns <- ggplot () + 
-  geom_line (data = portfolio_return_date, aes(x = portfolio_return_date$date, y=portfolio_return_date$r), color = "blue") + labs(title = "Strategy daily portfolio returns", x = "Date", y = "Returns") + theme(plot.title = element_text(hjust = 0.5))
-print(p_portfolio_returns)
-```
-
-We can see that the daily portfolio returns hover between 0 and 0.025 for most of the time with some outliers.
-
-Next, let's take a look with the time series of daily market returns:
-
-```{r A.2, fig.align = "center", fig.width = 5, fig.height = 4, echo = FALSE}
-p_daily_mkt <- ggplot () + 
-  geom_line (data = returns, aes(x = returns$d, y=returns$r), color = "blue") + labs(title = "Market daily portfolio returns", x = "Date", y = "Returns") + theme(plot.title = element_text(hjust = 0.5))
-print(p_daily_mkt)
-```
-
-Here we can see that, while there seem to be some outliers, the market returns seem to be less volatile than the returns of our portfolio. 
-
-The annualized mean market return, volatility and Sharpe ratio per year are also summarized in the table below:
-
-```{r B4, echo = FALSE}
-q2_years <- c("1996", "1997", "1998", "1999", "2000", "2001")
-q2_m_means <- c("15.8%", "25.8%", "-2.9%", "-7.1%", "0.4%", "4.7%")
-q2_m_sd <- c("8.01%", "10.60%", "14.92%", "9.96%", "13.94%", "15.29%")
-q2_m_sr <- c("1.98", "2.44", "-0.20", "-0.71", "0.03", "0.31")
-q2_table2 <- cbind(q2_years, q2_m_means, q2_m_sd, q2_m_sr)
-kable(q2_table2, row.names = FALSE, col.names = c("Years", "Mean", "Standard deviation", "Sharpe Ratio"), caption = "Annualized market returns", align = "crrr")
-```
-
-Based on our strategy, we get the following annualized returns. Annualized returns were based on 252 trading days per year.
-
-```{r A.2a, echo = FALSE}
-lag1_table <- cbind("217.5%", "19.57%", "11.11")
-kable(lag1_table, row.names = FALSE, col.names = c("Mean", "Standard deviation", "Sharpe Ratio"), caption = "Annualized returns", align = "rrr")
-```
-
-Looking at the consistency of our returns, we get the following returns per year.
-
-```{r A.3, fig.align = "center", echo = FALSE}
-percentages <- function(x, dec = 1) {
-  paste(round(x*100, digits = dec), "%", sep = "")
-}
-statistics_lag1$Mean <- percentages(statistics_lag1$Mean)
-statistics_lag1$`Standard Dev`<- percentages(statistics_lag1$`Standard Dev`, dec = 2)
-statistics_lag1$`Sharpe Ratio`<- round(statistics_lag1$`Sharpe Ratio`, digits = 2)
-kable(statistics_lag1, caption = "Annualized returns by year", row.names = FALSE, col.names = c("Year", "Mean return", "Standard deviation", "Sharpe ratio"), align = "crrr")
-```
-
-From the above table, we can see that the returns are not stable over time. We run a Ljung-Box-Test to test for stationarity in our returns. The test statistics show a $\tilde{\chi}^2$ of $0.0633$ and a p-value of $0.8013$. Moreover we ran the ADF, PACF and ACF tests. The ADF test is the only test out of the 4 that shows stationarity. As a consequence we conclude that these results show that the distribution of our returns is not stationary.
-
-To further validate the results of our analyses, we want to check for any outliers and analyze their effect on our strategy. To do so, our first analysis focuses on the market returns and if there are any unusual events in our underlying data that would potentially distort the results of our strategy or hinder its application.  
-
-```{r A.4, out.width = '.49\\linewidth', fig.width = 3, fig.height = 4,fig.show = 'hold',fig.align = 'center', echo = FALSE}
-plot(returns$d,returns$r, main = "Market returns", xlab = "Date", ylab = "Market returns")
-boxplot(returns$r, main = "Boxplot of market returns", ylab = "Market returns", xlab = "Boxplot")
-```
-
-In general, the mean of the daily market returns in the period from 1996 to 2002 is $0.02\%$ with a standard deviation of $0.78\%$. The maximum of our daily returns during the period was $4.21\%$, while the minimum equaled $-4.95\%$. While we can see a number of outliers in our data, the absolute number is relatively low. Out of 1512 trading days we observed, we only had 52 outliers in our data, which is a percentage of approximately $3.4\%$. Furthermore, 32 of the outliers were negative, while 20 of those were positive outliers, which also resonates in the mean of the outliers of approx. $-0.61\%$. This is in line of the general observation that the stockmarket is slightly screwed to the left. 
-
-To analyze this further, we take a look at the dates at which the outliers happened:
-
-```{r A.5, out.width = '.49\\linewidth', fig.width = 3, fig.height = 4,fig.show = 'hold',fig.align = 'center', include = FALSE}
-outliers = boxplot(returns$r)$out
-outliers_indexes <- which(returns$r %in% outliers)
-```
-
-```{r A.5a, out.width = '.49\\linewidth', fig.width = 4, fig.align = 'center', echo = FALSE}
-outlier_date_list <- returns[outliers_indexes,]
-outlier_year_list <- lubridate::year(outlier_date_list$d)
-y1996 = sum(outlier_year_list == 1996)
-y1997 = sum(outlier_year_list == 1997)
-y1998 = sum(outlier_year_list == 1998)
-y1999 = sum(outlier_year_list == 1999)
-y2000 = sum(outlier_year_list == 2000)
-y2001 = sum(outlier_year_list == 2001)
-outlier_years <- data.frame("Years" = c("1996", "1997", "1998", "1999", "2000", "2001"), "Number of outliers" = c(y1996, y1997, y1998, y1999, y2000, y2001))
-kable(outlier_years, caption = "Outlier dates", row.names = FALSE, col.names = c("Year", "Number of outliers"))
-```
-
-We can see that the outliers are generally distributed across the time period, i.e. in every year there is at least one outlier. Furthermore, we can see that we have a lot of outliers in 1998 during the height of the tech bubble as well as in 2000 and 2001, when the bubble reached its peak and subsequently began to burst. Furthermore, as we can see from the time series of market returns, the outliers seem to be rather clustered. For example, we have an obvious cluster in the days after the market reopened post 9/11 in 2001.
-
-Further analyzing the market returns during our sample period, we take a look at the distribution at returns:
-
-```{r A.5b, out.width = '.49\\linewidth', fig.width = 3, fig.height = 4,fig.show = 'hold', fig.align = 'center', echo = FALSE}
-qqnorm(returns$r);qqline(returns$r, col = 2)
-hist(returns$r, breaks = 50, main = "Histogram of returns", xlab = "Market returns")
-```
-
-As we can see from the Q-Q Plot our market returns are not perfectly normally distributed. Instead we have fat tails which can also be seen from the histogram. Furthermore, the Q-Q Plot gives an indication that the mean of our returns is different from zero, which may be in line of a random walk with a drift. Given the small number of outliers in the data as well as their distribution - with fat tails on both sides of the spectrum - we do not expect a significant effect of the market returns on the results of our strategy. 
-
-Apart from outliers over time, our data may also include some outliers within the different components of the market return. To analyze this, we further take a look at the individual stocks in our population to see if we have any "outlier stocks" within our sample. Thus, we again plot the mean returns per stock as well as a boxplot to find potential outliers. For this exercise, the cumulative returns over the whole trading period from Jan 1996 to Dec 2001 were computed:
-
-```{r A.6, out.width = '.49\\linewidth', fig.width = 3, fig.height = 4,fig.show = 'hold',fig.align = 'center', echo = FALSE}
-# Individual Stock Average Return
-mean_across_stock <- vsf(stock_pivot,"1996-01-02","2001-12-31")
-mean_across_stock_clean <- as.numeric(as.vector(mean_across_stock[,2]))
-
-plot(mean_across_stock_clean, main = "Mean return of stocks", xlab = "Index", ylab = "Mean return")
-boxplot(mean_across_stock_clean, main = "Boxplot of stock returns", xlab = "Boxplot", ylab = "Mean return")
-```
-
-We can see that we also have a number of outliers in terms of return of individual stocks within our data. In fact, 33 or about $4.8\%$ of our stocks are outliers. To see which effect this may have, we can take a look at the histogram of stock returns during the period: 
-
-```{r A.7, out.width = '.49\\linewidth', fig.width = 3, fig.height = 4,fig.show = 'hold',fig.align = 'center', include = FALSE}
-outliers_by_stock = boxplot(mean_across_stock_clean)$out
-outliers_indexes_by_stock <- which(mean_across_stock_clean %in% outliers_by_stock)
-
-outliers_stock_list <- mean_across_stock[outliers_indexes_by_stock,]
-```
-
-```{r A.8, fig.width = 3, fig.height = 4, fig.show = 'hold', fig.align = 'center', echo = FALSE}
-qqnorm(mean_across_stock_clean);qqline(mean_across_stock_clean, col = 2)
-hist(mean_across_stock_clean, breaks = 50, main = "Histogram of stock returns", xlab = "Mean stock returns")
-```
-
-From both the histogram as well as the Q-Q Plot, we can see that our outliers seem to be heavily skewed to the left side of our distribution and the far left tail is over proportionally big as a result. Out of the 33 outliers, only 5 have positive values while 28 have negative values. In fact, while the mean return of all stocks during the period was $6.32\%$, the average return of our outliers was $-24.62\%$ and thus significantly lower. Excluding the outliers from our data increases the average return of each stock to $7.88\%$. Below are outlined the top 5 outliers on each side of the spectrum:
-
-```{r A.9, echo = FALSE}
-top_ticker <- c("ESCA", "KSU", "EV", "ARXX", "SPW")
-top_names <- c("Escalade", "Kansas City Southern", "Eaton Vance", "Aeroflex", "SPX Corp")
-top_r <- c("46.22%", "44.97%", "39.92%", "39.69%", "36.78%")
-top_df <- data.frame("Ticker" = top_ticker, "Name" = top_names, "Returns" = top_r)
-kable(top_df, caption = "Outliers - Top Performing Stocks", row.names = FALSE, col.names = c("Ticker", "Name", "Returns"), align = "c")
-```
-
-```{r A.10, echo = FALSE}
-bot_ticker <- c("SHELQ", "FMO", "RESR", "NEON", "CDE")
-bot_names <- c("Sheldahl", "Fiduciary/Claimore MLP Op. Fund", "D Research", "Neonode", "Coeur Mining")
-bot_r <- c("(59.19)%", "(52.99)%", "(51.89)%", "(51.54)%", "(51.06)%")
-bot_df <- data.frame("Ticker" = bot_ticker, "Name" = bot_names, "Returns" = bot_r)
-kable(bot_df, caption = "Outliers - Worst Performing Stocks", row.names = FALSE, col.names = c("Ticker", "Name", "Returns"), align = "c")
-```
-
-From this analysis, it is again obvious that we seem to have bigger outliers to the left side of our distribution than to the right side. In contrast to the market returns, the effect of the outlier stocks on our results may be more significant, since there are more outliers and the distribution of the outliers is heavily skewed.
-
-After we have focused on analyzing the validity of the results of our strategy in the first part, as a next step we want to focus on the correlation of our returns. First off, the strategy seems to have only a very limited correlation with the market of 0.12. Thus, the strategy seems indeed to be rather market-neutral and not just dollar-neutral. Secondly, the long and the short portfolio have a correlation of -0.30. 
-
-While these results can be interpreted as positive for the contrarian strategy, the question is whether the results actually have validity of applied into the real world since we took a number of assumptions and simplification in our model. Most notably those are no transaction costs - which would potentially be huge since we effectively turn over our whole portfolio every single day - and no market impact - which may distort prices. The assumption of no transaction costs seems particularly strong given the design of our strategy. Most important elements of transaction costs missing in our strategy are the lack of a bid ask spread and of interest on short sales.  In reality the actual results are unlikely to track $\pi (t)$ very well because of those high costs that are currently ignored.
-
-Apart from those issues, there are a number of additional data issues that may effect the simulation of our strategy. Since our strategy is based on historic data, there may be some survivorship bias within our data sets. Firms may have gone bankrupt or have been taken over and those events would potentially present the largest outliers and thus may affect the implementation of our strategy. We also assume that we are able to trade stocks as a fraction which would potential hinder the exact implementation our strategy. Liquidity restrictions are also not taken into account in our strategy design, i.e. that firms may have to post some sort of collateral as a margin for potential losses on their short sales.
-
-The data issue that may have the biggest effect on the implementation of our strategy is the assumption, that the we are able to buy the stocks for the closing price. The weights are calculated on those prices and we assume that we would be able to invest in the stocks at the same price, otherwise we would not be able to yield the full daily returns as calculated in our return projection. In reality though, prices change overnight, as we have seen in our analysis in Project A, and they do this quite significantly from time to time, especially since major corporate news are published outside of the regular trading hours. The impact of these issue on our strategy may thus be quite significant.
-
-Additionally, we only analyzed a limited sub sample and thus our results may not be statistically significant. Furthermore, if this was a potential anomaly within the market that could be exploited, its existence in the past may not necessarily mean that it will consistent in the future. If the strategy was tradeable, the possibility that multiple investment managers would try to implement it is very high and the anomaly may not persist any longer in the future.
-
-```{r, results='asis', eval=(opts_knit$get('rmarkdown.pandoc.to') == 'latex'), echo = FALSE}
-cat('\\pagebreak')
-```
-
-## Question 2
-
-Strategy: Similarly to the strategy previously implemented, consider a contrarian strategy of "selling the winners and buying the losers". Losers are considered to be the worst 10% of the returns recorded on a day, whereas winners are considered to be the best 10% of the returns on that day. 
-
-A simple strategy consists of trading as late in the day as possible, just prior to the market
-close, after observing the activity for a given day. The portfolio is rebalanced so that the
-new weight of each stock within the portfolio is proportional to its return during the day divided by the sum of the long or short returns, depending on whether we short or long the stock. This can be summarized like this
-$$ w_i = \frac{r_i}{\sum r_i} i\in I, I: top 10\% of returns on day \\
-w_j = - \frac{r_j}{\sum r_j} j \in J, J: bottom 10\% of returns on day.$$
-
-Let the return on stock i in period t be $R_i (t)$. Overall, the longs and shorts are balanced since by construction, $\sum_i w_i (t) = 0$.
-
-In addition to specifying the relative size of the weights, let's further require that the long/short portfolio be "fully-invested" so that the sum of the long weights and the sum of the short weights separately add up to 100%. That is,
-$$\sum_{i\in L} w_i = 1 = \sum_{j\in S} |w_j|$$
-The time series of daily portfolio returns, $\pi(t)$ is given by
-$$\pi(t)=\frac{\Delta MV}{MV}=\sum_{i\in U}w_i (t-1)R_i (t).$$
-As when the first strategy was implemented, the trading period spanned between Jan 1, 1996 and Dec 31, 2001, inclusive.
-The time series of daily portfolio returns $\pi (t)$ generated by running this trading strategy are presented on the following graph:
-
-```{r B1, fig.align = "center", fig.width = 5, fig.height = 4, echo = FALSE}
-p_portfolio_returns_q2 <- ggplot () + 
-  geom_line (data = portfolio_return_date_q2, aes(x = portfolio_return_date_q2$date, y=portfolio_return_date_q2$r), color = "blue") + ggtitle("Daily portfolio returns") + xlab("Date") + ylab("Returns") + theme(plot.title = element_text(hjust = 0.5))
-
-print(p_portfolio_returns_q2)
-```
-
-As noticed in the graph above, the daily portfolio returns of this strategy mainly range between 0 and 0.05, with some outliers.
-The graph of the daily market returns, as presented earlier, is also attached below:
-
-```{r B2, fig.align = "center", fig.width = 5, fig.height = 4, echo = FALSE}
-p_daily_mkt_q2 <- ggplot () + 
-  geom_line (data = returns, aes(x = returns$d, y=returns$r), color = "blue") + ggtitle("Daily market returns") + xlab("Date") + ylab("Returns") + theme(plot.title = element_text(hjust = 0.5))
-
-print(p_daily_mkt_q2)
-```
-
-After annualizing the daily mean return, volatility of returns and calculating the Sharpe ratio for the portfolio constructed based on this strategy, we summarized these key portfolio metrics in the following table:
-
-```{r B3a, fig.align = "center", echo = FALSE}
-strat2_mean <- percentages(annualized_mean_q2)
-strat2_sd <- percentages(annualized_sd_q2)
-strat2_sr <- round(annualized_sharpe_ratio_q2, digits = 2)
-strat2_table <- cbind(strat2_mean, strat2_sd, strat2_sr) 
-kable(strat2_table, row.names = FALSE, col.names = c("Mean", "Standard deviation", "Sharpe Ratio"), caption = "Strategy 2: Annualized returns", align = "rrr")
-```
-
-For the different years in which our strategy was run, we get the following returns: 
-
-```{r B3b, echo = FALSE}
-q2_means <- c("510.3%", "376.5%", "336.0%", "334.2%", "402.2%", "346.7%")
-q2_sd <- c("22.46%", "22.09%", "31.16%", "25.42%", "34.04%", "41.30%")
-q2_sr <- c("22.72", "17.04", "10.79", "13.14", "11.82", "8.39")
-q2_table1 <- cbind(q2_years, q2_means, q2_sd, q2_sr)
-kable(q2_table1, row.names = FALSE, col.names = c("Years", "Mean", "Standard deviation", "Sharpe Ratio"), caption = "Strategy 2: Annualized returns by year", align = "crrr")
-```
-
-Comparing the annualized metrics for the portfolio we constructed and the market over time, we conclude that following the strategy proposed leads to significantly higher returns than holding the market portfolio (equally weighted for all stocks), higher Sharpe ratios but, as expected, higher risk.
-
-Moreover, as performed for the first strategy, to assess whether the portfolio returns are consistent over time and whether the distribution of the daily returns is stationary, we run a Ljung-Box-Test to test for autocorrelation in our returns. Based on the test statistics, $\tilde{\chi}^2$ is at 0.0638 and the p-value is at 0.8021, the results are not stationary. Moreover, the results from the ACF, PACF, and ADF tests are in line with the ones obtained for the first strategy and this confirms our theory of non-stationarity.
-
-Furthermore, to assess whether our strategy is market-neutral or just dollar-neutral, we calculate the correlation of the portfolio returns to the market and the correlation of the long portfolio and the short portfolio returns. The correlation of the portfolio returns to the market is $0.09$, and the correlation of the long portfolio to the short portfolio returns is $-0.29$ Given the very low correlation of the portfolio returns to the market, the strategy seems to be market-neutral and not just dollar-neutral.
-
-As the strategy currently analyzed has similar characteristics and rationale as the strategy previously examined, the main concerns raised on how realistic the strategy is are applying in this case as well. Summing up some of the key issues detected:
-
-1.	The assumption of a frictionless market is highly unrealistic and seriously impacts the effectiveness of the strategy. Since we rebalance the portfolio on a daily basis, the transaction costs incurred would be very high. In fact, due to this the strategy may end up generating negative returns in the real world. Even without transaction costs, due to the data issues laid out in part 1 which are similar for our strategy, the implementation of the strategy would not yield the same returns as forecasted.
-2.	The sample of stock returns on which we have based our conclusions is only a part of the market and does not necessarily represent the entire market. Hence, there may be data issues as survivorship bias or statistical insignificance in our results.
-3.	Since the results of the strategy have been based on a limited period of time of trading, its performance may not be consistent in the future as either this period could represent an abnormal time for the market or the exploitation of the strategy by other investors through time would decrease and even eliminate its effectiveness.
-
-As an investor that had $10,000 to invest either in the one of the strategies, the market, or cash, we should take into consideration the level of risk that we are willing to take on. While under generally finance assumptions investors prefer greater returns, and thus more money to less money, we effectively have a risk-return trade-off for most investment opportunities in the market.
-
-In the tables below, we summarize the average returns generated by the two strategies, their Sharpe ratios and volatilities, as well as the average return for the 10-year US Treasury yields that we consider to be the risk-free rate and, hence, the return on cash.
-
-```{r B5, echo = FALSE}
-q2_10y_yield <- c("6.5%", "6.4%", "5.3%", "5.7%", "6.0%", "5.0%")
-q2_table3 <- cbind(q2_years, statistics_lag1$Mean, q2_means, q2_10y_yield, statistics_lag1$`Standard Dev`, q2_sd, statistics_lag1$`Sharpe Ratio`, q2_sr)
-kable(q2_table3, row.names = FALSE, col.names = c("Years", "Mean Strat1", "Mean Strat2", "10y T-Note", "SD Strat1", "SD Strat2" , "Sharpe Strat1", "Sharpe Strat2"), caption = "Annualized returns", align = "crrrrrrr")
-```
-
-Comparing the returns presented above, we can safely conclude that the trading strategy we constructed generates much higher returns than both cash and the first trading strategy. However, the higher return generated comes with greater risk. Nonetheless, the Sharpe ratio for the strategy we constructed exceeds the first strategy's Sharpe ratio across time, meaning that for every extra unit of risk we take on, we get higher return if we invest in our strategy instead of investing in the first strategy. Taken all of the above into account, if we had to choose among these two trading strategies we would invest the $10,000 in the strategy we constructed. The allocation between our strategy and cash, though, depends on how risk-averse as investors we are. The more we increase the amount we invest in cash, the more our return will decrease, but along with it, the volatility of the returns will also decrease as cash has zero volatility. 
-
-Given the comparison of the mean returns, volatility and Sharpe ratio of the two trading strategies, although they both have the same goal being mean-reversion strategies, the strategy we constructed is more successful in achieving its goal. This is visible both from the average returns themselves, but also from the risk-adjusted returns, as observed through the Sharpe ratios of the two strategies. 
-
-```{r, results='asis', eval=(opts_knit$get('rmarkdown.pandoc.to') == 'latex'), echo = FALSE}
-cat('\\pagebreak')
-```
-
-## Question 3
-
-Going back to our strategy from question 1, the choice of a one day lag was rather ambiguous. Thus, the question remains if there may be a different strategy out of the same 'family' that would have delivered greater results. To test this, different contrarian strategies with lags from $k=1,2,...,10$ days. In general, we can define our family of strategies like this:
-$$w_i^{(k)}(t-1)\alpha -[R_i(t-k)-\bar{R}(t-k)]$$
-Implementing this strategy, we get the following annualized statistics for each of our siblings:
-
-```{r C.0, echo = FALSE}
-lag_means <- c(2.17483247,	0.476400987,	0.190565958,	0.127715931,	0.023448115,	0.229015395,	-0.005036714,	0.121536133,	0.057287452,	0.016873985)
-lag_sd <- c(0.195747036,	0.1422652,	0.139122315,	0.128977719,	0.127643787,	0.128217197,	0.122349056,	0.120736729,	0.12185469,	0.12077218)
-lag_sr <- c(11.11042348,	3.348682497,	1.369772763,	0.99021701,	0.183699617,	1.786151933,	-0.041166759,	1.006621047,	0.470129231,	0.139717484)
-lag_means <- percentages(lag_means)
-lag_sd <- percentages(lag_sd, dec = 2)
-lag_sr <- round(lag_sr, digits = 2)
-lag_column <- as.character(c(1:10))
-lag_table <- cbind.data.frame(lag_column, lag_means, lag_sd, lag_sr)
-kable(x = lag_table, caption = "Annualized return statistics", row.names = FALSE, col.names = c("Lag", "Mean", "Standard deviation", "Sharpe ratio"), align = "crrr")
-```
-
-For each of the strategies we get the following returns per year:
-
-```{r C.1, echo = FALSE}
 #### Lags 2 to 10
-statistics_lag2 = sf(stock_pivot,weights,"1996-01-02","2001-12-31",2)
-statistics_lag2$Mean <- percentages(statistics_lag2$Mean)
-statistics_lag2$`Standard Dev`<- percentages(statistics_lag2$`Standard Dev`, dec = 2)
-statistics_lag2$`Sharpe Ratio`<- round(statistics_lag2$`Sharpe Ratio`, digits = 2)
+statistics_lag2 = sf(stock_pivot,weights,"1996-01-03","2001-12-31",2)
+statistics_lag2
 
-statistics_lag3 = sf(stock_pivot,weights,"1996-01-02","2001-12-31",3)
-statistics_lag3$Mean <- percentages(statistics_lag3$Mean)
-statistics_lag3$`Standard Dev`<- percentages(statistics_lag3$`Standard Dev`, dec = 2)
-statistics_lag3$`Sharpe Ratio`<- round(statistics_lag3$`Sharpe Ratio`, digits = 2)
+statistics_lag3 = sf(stock_pivot,weights,"1996-01-04","2001-12-31",3)
+statistics_lag3
 
-statistics_lag4 = sf(stock_pivot,weights,"1996-01-02","2001-12-31",4)
-statistics_lag4$Mean <- percentages(statistics_lag4$Mean)
-statistics_lag4$`Standard Dev`<- percentages(statistics_lag4$`Standard Dev`, dec = 2)
-statistics_lag4$`Sharpe Ratio`<- round(statistics_lag4$`Sharpe Ratio`, digits = 2)
+statistics_lag4 = sf(stock_pivot,weights,"1996-01-05","2001-12-31",4)
+statistics_lag4
 
-statistics_lag5 = sf(stock_pivot,weights,"1996-01-02","2001-12-31",5)
-statistics_lag5$Mean <- percentages(statistics_lag5$Mean)
-statistics_lag5$`Standard Dev`<- percentages(statistics_lag5$`Standard Dev`, dec = 2)
-statistics_lag5$`Sharpe Ratio`<- round(statistics_lag5$`Sharpe Ratio`, digits = 2)
+statistics_lag5 = sf(stock_pivot,weights,"1996-01-08","2001-12-31",5)
+statistics_lag5
 
-statistics_lag6 = sf(stock_pivot,weights,"1996-01-02","2001-12-31",6)
-statistics_lag6$Mean <- percentages(statistics_lag6$Mean)
-statistics_lag6$`Standard Dev`<- percentages(statistics_lag6$`Standard Dev`, dec = 2)
-statistics_lag6$`Sharpe Ratio`<- round(statistics_lag6$`Sharpe Ratio`, digits = 2)
+statistics_lag6 = sf(stock_pivot,weights,"1996-01-09","2001-12-31",6)
+statistics_lag6
 
-statistics_lag7 = sf(stock_pivot,weights,"1996-01-02","2001-12-31",7)
-statistics_lag7$Mean <- percentages(statistics_lag7$Mean)
-statistics_lag7$`Standard Dev`<- percentages(statistics_lag7$`Standard Dev`, dec = 2)
-statistics_lag7$`Sharpe Ratio`<- round(statistics_lag7$`Sharpe Ratio`, digits = 2)
+statistics_lag7 = sf(stock_pivot,weights,"1996-01-10","2001-12-31",7)
+statistics_lag7
 
-statistics_lag8 = sf(stock_pivot,weights,"1996-01-02","2001-12-31",8)
-statistics_lag8$Mean <- percentages(statistics_lag8$Mean)
-statistics_lag8$`Standard Dev`<- percentages(statistics_lag8$`Standard Dev`, dec = 2)
-statistics_lag8$`Sharpe Ratio`<- round(statistics_lag8$`Sharpe Ratio`, digits = 2)
+statistics_lag8 = sf(stock_pivot,weights,"1996-01-11","2001-12-31",8)
+statistics_lag8
 
-statistics_lag9 = sf(stock_pivot,weights,"1996-01-02","2001-12-31",9)
-statistics_lag9$Mean <- percentages(statistics_lag9$Mean)
-statistics_lag9$`Standard Dev`<- percentages(statistics_lag9$`Standard Dev`, dec = 2)
-statistics_lag9$`Sharpe Ratio`<- round(statistics_lag9$`Sharpe Ratio`, digits = 2)
+statistics_lag9 = sf(stock_pivot,weights,"1996-01-12","2001-12-31",9)
+statistics_lag9
 
-statistics_lag10 = sf(stock_pivot,weights,"1996-01-02","2001-12-31",10)
-statistics_lag10$Mean <- percentages(statistics_lag10$Mean)
-statistics_lag10$`Standard Dev`<- percentages(statistics_lag10$`Standard Dev`, dec = 2)
-statistics_lag10$`Sharpe Ratio`<- round(statistics_lag10$`Sharpe Ratio`, digits = 2)
-```
-
-```{r C.1a, fig.align="center", echo = FALSE}
-c1a <- cbind.data.frame(statistics_lag1$Year, statistics_lag1$Mean, statistics_lag2$Mean, statistics_lag3$Mean, statistics_lag4$Mean, statistics_lag5$Mean, statistics_lag6$Mean, statistics_lag7$Mean, statistics_lag8$Mean, statistics_lag9$Mean, statistics_lag10$Mean)
-kable(x = c1a, row.names = FALSE, caption = "Yearly mean of k-lag Strategies", col.names = c("Year", "k=1", "k=2", "k=3", "k=4", "k=5", "k=6", "k=7", "k=8", "k=9", "k=10"), digits = 4,align = "crrrrrrrrrr")
-```
-
-```{r C.1b, fig.align="center", echo = FALSE}
-c1b <- cbind.data.frame(statistics_lag1$Year, statistics_lag1$`Standard Dev`, statistics_lag2$`Standard Dev`, statistics_lag3$`Standard Dev`, statistics_lag4$`Standard Dev`, statistics_lag5$`Standard Dev`, statistics_lag6$`Standard Dev`, statistics_lag7$`Standard Dev`, statistics_lag8$`Standard Dev`, statistics_lag9$`Standard Dev`, statistics_lag10$`Standard Dev`)
-kable(x = c1b, row.names = FALSE, caption = "Yearly standard deviation of k-lag Strategies", col.names = c("Year", "k=1", "k=2", "k=3", "k=4", "k=5", "k=6", "k=7", "k=8", "k=9", "k=10"), digits = 4, align = "crrrrrrrrrr")
-```
-
-```{r C.1c, fig.align="center", echo = FALSE}
-c1c <- cbind.data.frame(statistics_lag1$Year, statistics_lag1$`Sharpe Ratio`, statistics_lag2$`Sharpe Ratio`, statistics_lag3$`Sharpe Ratio`, statistics_lag4$`Sharpe Ratio`, statistics_lag5$`Sharpe Ratio`, statistics_lag6$`Sharpe Ratio`, statistics_lag7$`Sharpe Ratio`, statistics_lag8$`Sharpe Ratio`, statistics_lag9$`Sharpe Ratio`, statistics_lag10$`Sharpe Ratio`)
-kable(x = c1c, row.names = FALSE, caption = "Yearly Sharpe Ratio of k-lag Strategies", col.names = c("Year", "k=1", "k=2", "k=3", "k=4", "k=5", "k=6", "k=7", "k=8", "k=9", "k=10"), digits = 4, align = "crrrrrrrrrr")
-```
-
-As we can see, the Sharpe Ratio generally seem to decline for greater ks. Given this risk-return trade-off the 1-day lag strategy seems to be superior to any other variation of the strategy, although the 2-day lag seems to deliver a pretty consistent 3-Sharpe return over the observation period. In terms of implementation, although the 1-day strategy seems to be delivering a superior risk-return trade-off, it is also more costly to implement due to higher transaction costs. The greater Sharpe Ratio may just be a result of those frictions within the market.
+statistics_lag10 = sf(stock_pivot,weights,"1996-01-15","2001-12-31",10)
+statistics_lag10
